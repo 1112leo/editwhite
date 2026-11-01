@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>문제 이미지 변환기</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090c13;
+      --card: #141922;
+      --card2: #191f2a;
+      --line: #2b3444;
+      --text: #f4f6fa;
+      --muted: #a0acbf;
+      --accent: #b7c7ff;
+      --accent2: #7e99ff;
+      --ok: #74dbac
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    [hidden] {
+      display: none !important
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+      background: radial-gradient(ellipse 72% 50% at 50% -10%, #1e2a4c 0%, var(--bg) 70%);
+      color: var(--text);
+      min-height: 100vh
+    }
+
+    button,
+    input {
+      font: inherit
+    }
+
+    button {
+      cursor: pointer
+    }
+
+    main {
+      max-width: 1100px;
+      padding: 40px 22px 65px;
+      margin: auto
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      margin-bottom: 36px
+    }
+
+    .mark {
+      display: grid;
+      place-items: center;
+      width: 45px;
+      height: 45px;
+      border: 1px solid #3c507c;
+      border-radius: 14px;
+      background: linear-gradient(130deg, #dbe3ff, #8ba6ff);
+      color: #141c39;
+      font-size: 25px;
+      font-weight: 850;
+      box-shadow: 0 7px 30px #24345c66
+    }
+
+    .brand {
+      font-size: 16px;
+      font-weight: 780;
+      letter-spacing: -.5px
+    }
+
+    .subbrand {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 3px
+    }
+
+    .head {
+      margin-bottom: 28px
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: .15em;
+      margin-bottom: 10px
+    }
+
+    .head p {
+      color: var(--muted);
+      font-size: 15px;
+      margin: 0;
+      line-height: 1.7
+    }
+
+    .head strong {
+      color: #ecf0ff
+    }
+
+    .drop {
+      border: 1.5px dashed #556480;
+      background: linear-gradient(135deg, #161d2c, #111722);
+      border-radius: 22px;
+      min-height: 161px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 12px;
+      padding: 23px;
+      transition: .2s
+    }
+
+    .drop.drag {
+      background: #202d46;
+      border-color: #a5bafc;
+      transform: scale(1.004)
+    }
+
+    .drop .bigicon {
+      font-size: 30px;
+      color: var(--accent);
+      line-height: 1
+    }
+
+    .drop strong {
+      font-size: 15px
+    }
+
+    .drop small {
+      font-size: 12px;
+      color: var(--muted)
+    }
+
+    .drop button,
+    .primary {
+      border: 0;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #17203b;
+      padding: 11px 20px;
+      font-weight: 780;
+      transition: background .12s, transform .12s
+    }
+
+    .drop button:hover,
+    .primary:hover:not(:disabled) {
+      background: #d4deff
+    }
+
+    .drop button:active,
+    .primary:active:not(:disabled) {
+      transform: translateY(1px)
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin: 24px 2px 13px;
+      flex-wrap: wrap
+    }
+
+    .toolbar h2 {
+      font-size: 16px;
+      letter-spacing: -.3px;
+      margin: 0
+    }
+
+    .meta {
+      font-size: 12px;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 18px;
+      overflow: hidden;
+      min-width: 0
+    }
+
+    .paneltop {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      border-bottom: 1px solid var(--line)
+    }
+
+    .pill {
+      font-size: 11px;
+      color: #aebbd1;
+      background: #232c3a;
+      border-radius: 100px;
+      padding: 5px 9px;
+      font-weight: 550
+    }
+
+    .canvas-area {
+      height: 310px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 22px;
+      overflow: hidden
+    }
+
+    .original {
+      background: #e6e9f0
+    }
+
+    .result {
+      background-color: #263245;
+      background-image: linear-gradient(45deg, #344158 25%, transparent 25%), linear-gradient(-45deg, #344158 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #344158 75%), linear-gradient(-45deg, transparent 75%, #344158 75%);
+      background-size: 24px 24px;
+      background-position: 0 0, 0 12px, 12px -12px, -12px 0px
+    }
+
+    .canvas-area img {
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 9px #0001)
+    }
+
+    .placeholder {
+      text-align: center;
+      color: #8390a7;
+      font-size: 13px;
+      line-height: 1.7
+    }
+
+    .placeholder b {
+      font-size: 24px;
+      font-weight: 500;
+      display: block;
+      margin-bottom: 3px;
+      opacity: .65
+    }
+
+    .original .placeholder {
+      color: #6e7b91
+    }
+
+    .settings {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px
+    }
+
+    .settings .box {
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 18px;
+      padding: 21px
+    }
+
+    .settings h3 {
+      margin: 0 0 15px;
+      font-size: 14px;
+      letter-spacing: -.25px
+    }
+
+    .control {
+      margin-bottom: 18px
+    }
+
+    .ctl-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      margin-bottom: 10px
+    }
+
+    .ctl-line strong {
+      color: #ccdaff;
+      font-size: 13px;
+      font-variant-numeric: tabular-nums
+    }
+
+    .desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-top: 8px
+    }
+
+    input[type=range] {
+      width: 100%;
+      accent-color: #9db1fc;
+      cursor: pointer
+    }
+
+    label.check {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      cursor: pointer
+    }
+
+    input[type=checkbox] {
+      width: 17px;
+      height: 17px;
+      accent-color: #9cb3ff
+    }
+
+    .downloads {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 22px;
+      flex-wrap: wrap
+    }
+
+    .primary {
+      padding: 14px 23px;
+      font-size: 14px
+    }
+
+    .primary:disabled {
+      background: #354056;
+      color: #8290a6;
+      cursor: not-allowed
+    }
+
+    .secondary {
+      padding: 11px 12px;
+      border: 1px solid #384457;
+      border-radius: 10px;
+      background: transparent;
+      color: #ced8ea;
+      font-size: 12px
+    }
+
+    .download-note {
+      font-size: 12px;
+      color: var(--muted)
+    }
+
+    .status {
+      min-height: 22px;
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--ok)
+    }
+
+    .status.error {
+      color: #ff9c9c
+    }
+
+    .foot {
+      font-size: 12px;
+      color: #7e8a9b;
+      margin-top: 28px;
+      line-height: 1.8;
+      border-top: 1px solid #28303e;
+      padding-top: 15px
+    }
+
+    .hint {
+      color: #92a1b9;
+      font-size: 12px;
+      line-height: 1.6;
+      margin: 17px 2px 0
+    }
+
+    @media(max-width:680px) {
+      main {
+        padding: 24px 14px 45px
+      }
+
+      header {
+        margin-bottom: 28px
+      }
+
+      .preview-grid,
+      .settings {
+        grid-template-columns: 1fr
+      }
+
+      .canvas-area {
+        height: 245px
+      }
+
+      .drop {
+        min-height: 148px
+      }
+
+      .toolbar {
+        margin-top: 23px
+      }
+
+      .settings .box {
+        padding: 18px
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <header>
+      <div>
+        <div class="brand">문제 이미지 변환 도구</div>
+      </div>
+    </header>
+    <section class="head">
+      <h2>문제는 하얗게 배경은 투명하게 변환합니다</h2>
+      <p>수식·글씨·도형은 <strong>순백색(#FFFFFF)</strong>으로, 흰색 배경은 투명하게 바꿉니다.<br>원본 해상도를 유지한 PNG로 저장하세요.</p>
+    </section>
+    <section class="drop" id="dropZone" aria-label="이미지 업로드 영역">
+      <div class="bigicon" aria-hidden="true">⇧</div><strong>이미지를 여기에 놓거나 붙여넣으세요</strong>
+      <button type="button" id="openFile">이미지 선택</button><input id="fileInput" type="file" accept="image/*" hidden>
+    </section>
+    <div class="toolbar">
+      <h2>변환 미리보기</h2><span id="meta" class="meta">이미지를 선택해주세요</span>
+    </div>
+    <section class="preview-grid" aria-label="변환 결과 비교">
+      <div class="panel">
+        <div class="paneltop">원본 <span class="pill">업로드한 이미지</span></div>
+        <div class="canvas-area original" id="origArea">
+          <div class="placeholder" id="origPlaceholder"><b>▧</b>원본 이미지가 표시됩니다</div><img id="origImg" alt="원본 이미지"
+            hidden>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="paneltop">변환 결과 <span class="pill">투명 배경 + 흰색 획</span></div>
+        <div class="canvas-area result" id="outputArea">
+          <div class="placeholder" id="outPlaceholder"><b>✦</b>변환 결과가 표시됩니다</div><img id="outImg"
+            alt="흰색 획과 투명 배경으로 변환된 이미지" hidden>
+        </div>
+      </div>
+    </section>
+    <section class="settings" aria-label="변환 설정">
+      <div class="box">
+        <h3>이미지 보정</h3>
+        <div class="control">
+          <div class="ctl-line"><label for="threshold">배경 제거 기준</label><strong id="thresholdValue">248</strong></div>
+          <input type="range" id="threshold" min="205" max="255" value="248" step="1">
+          <div class="desc">값이 낮을수록 회색빛 배경까지 더 많이 제거합니다.</div>
+        </div>
+        <div class="control" style="margin-bottom:0">
+          <div class="ctl-line"><label for="ink">글씨·선 강도</label><strong id="inkValue">100%</strong></div><input
+            type="range" id="ink" min="60" max="160" value="100" step="5">
+          <div class="desc">가는 획이 흐리면 강도를 높여주세요.</div>
+        </div>
+      </div>
+      <div class="box">
+        <h3>내보내기</h3><label class="check"><input type="checkbox" id="crop"><span>투명한 바깥 여백 자동 제거</span></label>
+        <p class="desc">기본값은 원본 크기와 배치를 유지합니다. 여백 제거를 켜면 콘텐츠를 감싸는 영역만 잘라냅니다.</p>
+        <div class="control" style="margin-top:20px;margin-bottom:0">
+          <div class="ctl-line"><label for="padding">자르기 후 여백</label><strong id="paddingValue">16px</strong></div><input
+            id="padding" type="range" min="0" max="60" value="16" step="4" disabled>
+        </div>
+      </div>
+    </section>
+    <section class="downloads"><button id="download" class="primary" type="button" disabled>투명 PNG 저장 ↓</button><button
+        id="reset" class="secondary" type="button">설정 초기화</button></section>
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+    <div class="hint">팁: 배경이 완전한 흰색이 아니거나 그림자·압축 흔적이 있으면 ‘배경 제거 기준’을 낮춰 보세요. 원본의 검은 글씨뿐 아니라 다른 어두운 색도 흰색으로 변환됩니다.</div>
+  </main>
+  <script>
+    (() => {
+      'use strict';
+      const el = id => document.getElementById(id);
+      const fileInput = el('fileInput'), drop = el('dropZone');
+      const orig = el('origImg'), out = el('outImg'), meta = el('meta');
+      const threshold = el('threshold'), ink = el('ink'), crop = el('crop'), padding = el('padding');
+      const thresholdValue = el('thresholdValue'), inkValue = el('inkValue'), paddingValue = el('paddingValue');
+      const download = el('download'), status = el('status');
+      const sourceCanvas = document.createElement('canvas');
+      const outputCanvas = document.createElement('canvas');
+      let sourceURL = null, outputURL = null, fileName = 'problem', loaded = false, renderTimer = null, loadNumber = 0, renderNumber = 0;
+      function setStatus(message, error = false) { status.textContent = message; status.classList.toggle('error', error); }
+      const contexts = c => c.getContext('2d', { willReadFrequently: true });
+      const suffix = name => name.replace(/\.[^.]+$/, '').replace(/[^\p{L}\p{N}_\- .]/gu, '_').trim() || 'problem';
+      function revoke() { if (sourceURL) { URL.revokeObjectURL(sourceURL); sourceURL = null; } if (outputURL) { URL.revokeObjectURL(outputURL); outputURL = null; } }
+      function uploadFile(file) {
+        if (!file) return;
+        if (!(file.type || '').startsWith('image/')) { setStatus('이미지 파일만 선택할 수 있습니다.', true); return; }
+        if (file.size > 60 * 1024 * 1024) { setStatus('60MB 이하 이미지를 이용해주세요.', true); return; }
+        const number = ++loadNumber;
+        loaded = false; download.disabled = true; setStatus('이미지를 읽고 있습니다…');
+        const temp = URL.createObjectURL(file);
+        const image = new Image();
+        image.onload = () => {
+          if (number !== loadNumber) { URL.revokeObjectURL(temp); return; }
+          if (!image.naturalWidth || !image.naturalHeight || image.naturalWidth * image.naturalHeight > 60000000) {
+            URL.revokeObjectURL(temp); setStatus('이미지 크기가 너무 큽니다. 6천만 픽셀 이하로 시도해주세요.', true); return;
+          }
+          try {
+            sourceCanvas.width = image.naturalWidth; sourceCanvas.height = image.naturalHeight;
+            contexts(sourceCanvas).drawImage(image, 0, 0);
+            if (sourceURL) URL.revokeObjectURL(sourceURL);
+            sourceURL = temp; fileName = suffix(file.name);
+            orig.src = sourceURL; orig.hidden = false; el('origPlaceholder').hidden = true;
+            meta.textContent = `${file.name} · ${image.naturalWidth.toLocaleString()} × ${image.naturalHeight.toLocaleString()} px`;
+            loaded = true; render();
+          } catch (err) { URL.revokeObjectURL(temp); setStatus('이미지를 처리할 수 없습니다. 더 작은 이미지를 시도해주세요.', true); }
+        };
+        image.onerror = () => { URL.revokeObjectURL(temp); if (number === loadNumber) setStatus('이미지 파일을 열 수 없습니다.', true); };
+        image.src = temp;
+      }
+      function render() {
+        if (!loaded) return;
+        try {
+          const version = ++renderNumber;
+          const w = sourceCanvas.width, h = sourceCanvas.height;
+          const src = contexts(sourceCanvas).getImageData(0, 0, w, h);
+          const pixels = src.data, whitePoint = Number(threshold.value), boost = Number(ink.value) / 100;
+          let x1 = w, y1 = h, x2 = -1, y2 = -1;
+          const shouldCrop = crop.checked;
+          for (let y = 0; y < h; y++) {
+            const base = y * w * 4;
+            for (let x = 0; x < w; x++) {
+              const i = base + x * 4;
+              // Composite any pre-existing transparency onto white before thresholding.
+              const nativeAlpha = pixels[i + 3] / 255;
+              const lightness = (.2126 * pixels[i] + .7152 * pixels[i + 1] + .0722 * pixels[i + 2]) * nativeAlpha + 255 * (1 - nativeAlpha);
+              let a = Math.max(0, Math.min(1, (whitePoint - lightness) / whitePoint * boost));
+              if (a < 1 / 255) a = 0;
+              const byte = Math.round(a * 255);
+              pixels[i] = 255; pixels[i + 1] = 255; pixels[i + 2] = 255; pixels[i + 3] = byte;
+              if (shouldCrop && byte > 12) { if (x < x1) x1 = x; if (x > x2) x2 = x; if (y < y1) y1 = y; if (y > y2) y2 = y; }
+            }
+          }
+          const buffer = document.createElement('canvas'); buffer.width = w; buffer.height = h;
+          buffer.getContext('2d').putImageData(src, 0, 0);
+          if (shouldCrop && x2 >= x1) {
+            const p = Number(padding.value);
+            // Add padding in the exported transparent canvas (even beyond the original bounds).
+            outputCanvas.width = x2 - x1 + 1 + p * 2; outputCanvas.height = y2 - y1 + 1 + p * 2;
+            const ctx = outputCanvas.getContext('2d'); ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
+            ctx.drawImage(buffer, x1, y1, x2 - x1 + 1, y2 - y1 + 1, p, p, x2 - x1 + 1, y2 - y1 + 1);
+          } else {
+            outputCanvas.width = w; outputCanvas.height = h;
+            outputCanvas.getContext('2d').drawImage(buffer, 0, 0);
+          }
+          outputCanvas.toBlob(blob => {
+            if (version !== renderNumber) return;
+            if (!blob) { setStatus('PNG 생성에 실패했습니다.', true); return; }
+            if (outputURL) URL.revokeObjectURL(outputURL);
+            outputURL = URL.createObjectURL(blob);
+            out.src = outputURL; out.hidden = false; el('outPlaceholder').hidden = true;
+            download.disabled = false;
+            setStatus(`변환 완료 · ${outputCanvas.width.toLocaleString()} × ${outputCanvas.height.toLocaleString()} px · 투명 PNG`);
+          }, 'image/png');
+        } catch (e) { download.disabled = true; setStatus('변환 중 오류가 발생했습니다. 이미지 크기를 확인해주세요.', true); }
+      }
+      function queueRender() {
+        thresholdValue.textContent = threshold.value; inkValue.textContent = ink.value + '%'; paddingValue.textContent = padding.value + 'px'; padding.disabled = !crop.checked;
+        if (renderTimer) clearTimeout(renderTimer);
+        renderTimer = setTimeout(render, 110);
+      }
+      el('openFile').addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', () => { uploadFile(fileInput.files[0]); fileInput.value = ''; });
+      for (const key of ['dragenter', 'dragover']) drop.addEventListener(key, e => { e.preventDefault(); drop.classList.add('drag'); });
+      for (const key of ['dragleave', 'drop']) drop.addEventListener(key, e => { e.preventDefault(); drop.classList.remove('drag'); });
+      drop.addEventListener('drop', e => uploadFile(Array.from(e.dataTransfer.files).find(f => f.type.startsWith('image/'))));
+      document.addEventListener('paste', e => {
+        const file = Array.from(e.clipboardData?.items || []).filter(item => item.type.startsWith('image/')).map(item => item.getAsFile()).find(Boolean);
+        if (file) { e.preventDefault(); uploadFile(file); }
+      });
+      for (const control of [threshold, ink, crop, padding]) control.addEventListener('input', queueRender);
+      el('reset').addEventListener('click', () => { threshold.value = '248'; ink.value = '100'; crop.checked = false; padding.value = '16'; queueRender(); });
+      download.addEventListener('click', () => {
+        if (!outputURL) return;
+        const anchor = document.createElement('a'); anchor.href = outputURL; anchor.download = fileName + '_white.png';
+        document.body.appendChild(anchor); anchor.click(); anchor.remove();
+      });
+      window.addEventListener('beforeunload', revoke);
+    })();
+  </script>
+</body>
+
+</html>
