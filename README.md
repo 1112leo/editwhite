@@ -1,1 +1,2 @@
-# editwhite
+# EditWhite
+모의고사 문제 사진 배경제거, 본문 하얀색으로 변환
